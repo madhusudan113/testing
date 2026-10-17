@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>75-Day Challenge Tracker</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090d16;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1f293d;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+    .grid-cell {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .grid-cell:hover {
+      transform: translateY(-2px);
+    }
+    /* Circular progress transition */
+    .circle-progress {
+      transition: stroke-dashoffset 0.6s ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen font-sans antialiased selection:bg-emerald-500 selection:text-black pb-16">
+
+  <!-- TOP NAVIGATION HEADER -->
+  <header class="sticky top-0 z-40 bg-[#0b0f19]/80 backdrop-blur-md border-b border-slate-800/80 px-4 sm:px-8 py-3.5 transition-all">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <!-- Logo / Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/20 font-mono font-black text-slate-950 text-xl tracking-tighter">
+          75
+        </div>
+        <div>
+          <h1 class="font-extrabold text-base sm:text-lg tracking-tight bg-gradient-to-r from-slate-100 via-slate-200 to-slate-400 bg-clip-text text-transparent leading-none">
+            75-DAY CHALLENGE
+          </h1>
+          <p class="text-[11px] text-slate-400 font-mono mt-0.5 tracking-wider uppercase">Mastery & Discipline Tracker</p>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <button id="todayJumpBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700/70 text-xs font-semibold text-slate-200 transition">
+          <i data-lucide="calendar" class="w-3.5 h-3.5 text-emerald-400"></i>
+          <span>Today</span>
+        </button>
+        <button id="openHabitsModalBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-xs font-semibold text-emerald-300 transition">
+          <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+          <span class="hidden sm:inline">Customize Rules</span>
+        </button>
+        <button id="openSettingsModalBtn" class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition" title="Settings & Backup">
+          <i data-lucide="settings" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+
+    <!-- OVERVIEW STATS CARDS -->
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <!-- Overall Progress -->
+      <div class="bg-[#121826] border border-slate-800/90 rounded-2xl p-4 sm:p-5 relative overflow-hidden flex items-center justify-between">
+        <div>
+          <span class="text-xs font-medium text-slate-400 tracking-wide uppercase">Challenge Progress</span>
+          <div class="flex items-baseline gap-1 mt-1">
+            <h3 id="statPercent" class="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-400">0%</h3>
+            <span id="statDaysCompleted" class="text-xs text-slate-400 font-mono">0 / 75</span>
+          </div>
+          <p id="statRemaining" class="text-[11px] text-slate-400 mt-1">75 days left</p>
+        </div>
+        <!-- Circular Mini Ring -->
+        <div class="relative w-14 h-14 sm:w-16 sm:h-16 shrink-0 flex items-center justify-center">
+          <svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
+            <path class="text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <path id="progressCircle" class="text-emerald-500 circle-progress" stroke-dasharray="100, 100" stroke-dashoffset="100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          </svg>
+          <i data-lucide="award" class="w-5 h-5 absolute text-emerald-400"></i>
+        </div>
+      </div>
+
+      <!-- Current Streak -->
+      <div class="bg-[#121826] border border-slate-800/90 rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-400 tracking-wide uppercase">Active Streak</span>
+          <div class="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
+            <i data-lucide="flame" class="w-4 h-4"></i>
+          </div>
+        </div>
+        <div class="flex items-baseline gap-1 mt-1">
+          <h3 id="statStreak" class="text-2xl sm:text-3xl font-extrabold font-mono text-amber-400">0</h3>
+          <span class="text-xs text-slate-400 font-mono">Days</span>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-1">Current consecutive clean days</p>
+      </div>
+
+      <!-- Best Streak -->
+      <div class="bg-[#121826] border border-slate-800/90 rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-400 tracking-wide uppercase">Best Streak</span>
+          <div class="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400">
+            <i data-lucide="zap" class="w-4 h-4"></i>
+          </div>
+        </div>
+        <div class="flex items-baseline gap-1 mt-1">
+          <h3 id="statBestStreak" class="text-2xl sm:text-3xl font-extrabold font-mono text-cyan-400">0</h3>
+          <span class="text-xs text-slate-400 font-mono">Days</span>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-1">Personal milestone record</p>
+      </div>
+
+      <!-- Active Inspect Day -->
+      <div class="bg-[#121826] border border-slate-800/90 rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-400 tracking-wide uppercase">Viewing Day</span>
+          <div class="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400">
+            <i data-lucide="target" class="w-4 h-4"></i>
+          </div>
+        </div>
+        <div class="flex items-baseline gap-1.5 mt-1">
+          <h3 id="statSelectedDay" class="text-2xl sm:text-3xl font-extrabold font-mono text-indigo-300">Day 1</h3>
+          <span id="statSelectedDate" class="text-[11px] text-slate-400 truncate"></span>
+        </div>
+        <p id="statDayStatusPill" class="text-[11px] font-semibold text-emerald-400 mt-1 flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> In Progress
+        </p>
+      </div>
+    </section>
+
+    <!-- MAIN TWO COLUMN WORKSPACE -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      
+      <!-- LEFT COLUMN: 75-DAY INTERACTIVE GRID (7 COLS) -->
+      <section class="lg:col-span-7 bg-[#121826] border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+          <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <i data-lucide="layout-grid" class="w-5 h-5 text-emerald-400"></i>
+              75-Day Master Grid
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">Click any day tile to review or record activities.</p>
+          </div>
+
+          <!-- Grid Legend -->
+          <div class="flex items-center gap-2.5 text-[11px] font-medium flex-wrap text-slate-400">
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-md bg-emerald-500 shadow-sm shadow-emerald-500/40"></span> Done</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-md bg-rose-500/80"></span> Missed</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-md bg-amber-500 ring-2 ring-amber-400/30"></span> Active</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-md bg-slate-800 border border-slate-700"></span> Locked</span>
+          </div>
+        </div>
+
+        <!-- 75-Day Tiles Container -->
+        <div id="gridContainer" class="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2 sm:gap-2.5 mt-5">
+          <!-- Populated by JavaScript -->
+        </div>
+
+        <!-- Challenge Start Date bar -->
+        <div class="mt-6 pt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
+          <div class="flex items-center gap-2">
+            <span>Challenge Start Date:</span>
+            <input type="date" id="challengeStartDateInput" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200 text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none">
+          </div>
+          <button id="markDayCompleteQuickBtn" class="text-xs text-emerald-400 hover:text-emerald-300 font-medium underline-offset-4 hover:underline">
+            Fast Mark Day As Complete
+          </button>
+        </div>
+      </section>
+
+      <!-- RIGHT COLUMN: SELECTED DAY DETAILS, HABITS & LOGS (5 COLS) -->
+      <section class="lg:col-span-5 space-y-6">
+        
+        <!-- DAY HABITS CHECKLIST -->
+        <div class="bg-[#121826] border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden">
+          <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+            <div>
+              <div class="flex items-center gap-2">
+                <span id="activeDayBadge" class="px-2.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 text-xs font-mono font-bold uppercase tracking-wider border border-emerald-500/20">Day 1</span>
+                <h3 class="text-base font-bold text-white">Daily Checklist</h3>
+              </div>
+              <p class="text-xs text-slate-400 mt-1" id="checklistSubtitle">Complete all required non-negotiables.</p>
+            </div>
+            
+            <!-- Completion score for this day -->
+            <div class="text-right">
+              <span id="dayScoreBadge" class="font-mono text-sm font-bold text-slate-200">0/6</span>
+              <div class="w-16 h-1.5 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
+                <div id="dayScoreBar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Habit List -->
+          <div id="habitsListContainer" class="space-y-2.5 mt-5">
+            <!-- Dynamically populated checklist items -->
+          </div>
+
+          <!-- Add Habit Quick Prompt -->
+          <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
+            <span class="text-slate-400">Need specific custom rules?</span>
+            <button id="addHabitTriggerBtn" class="text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+              <span>Add Custom Habit</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- WATER INTAKE & DAILY STATS -->
+        <div class="bg-[#121826] border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+              <i data-lucide="droplet" class="w-4 h-4 text-cyan-400"></i>
+              Hydration Tracker (Target: 4L / ~1 Gallon)
+            </h3>
+            <span id="waterTotalLabel" class="font-mono text-xs font-bold text-cyan-400 bg-cyan-950/40 border border-cyan-800/50 px-2 py-0.5 rounded-md">
+              0.0 / 4.0 L
+            </span>
+          </div>
+
+          <!-- Interactive Water Glasses -->
+          <div class="grid grid-cols-8 gap-1.5 sm:gap-2" id="waterGlassesContainer">
+            <!-- 8 glasses representing 500ml each -->
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 pt-2">
+            <!-- Body Weight / Measurement -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Body Weight (kg/lbs)</label>
+              <div class="relative">
+                <input type="number" step="0.1" id="dayWeightInput" placeholder="e.g. 78.5" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:ring-1 focus:ring-emerald-500 focus:outline-none">
+                <span class="absolute right-3 top-2.5 text-xs text-slate-500 font-mono">wt</span>
+              </div>
+            </div>
+
+            <!-- Day Outcome Override / Status -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Day Status Override</label>
+              <select id="dayStatusOverrideSelect" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:ring-1 focus:ring-emerald-500 focus:outline-none">
+                <option value="auto">Auto (from rules)</option>
+                <option value="completed">Mark Success ✅</option>
+                <option value="failed">Mark Failed ❌</option>
+                <option value="in_progress">In Progress ⏳</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Progress Photo / Journal / Notes -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-xs font-semibold text-slate-400">Daily Journal & Notes</label>
+              <span class="text-[11px] text-slate-400" id="saveIndicator">Auto-saved</span>
+            </div>
+            <textarea id="dayNotesInput" rows="3" placeholder="How did today's workouts feel? Energy levels, thoughts, challenges overcome..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 placeholder-slate-600 focus:ring-1 focus:ring-emerald-500 focus:outline-none resize-none"></textarea>
+          </div>
+        </div>
+
+      </section>
+    </div>
+
+  </main>
+
+  <!-- CUSTOMIZE HABITS MODAL -->
+  <div id="habitsModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-[#121826] border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="sliders" class="w-4 h-4 text-emerald-400"></i>
+          Customize 75-Day Rules
+        </h3>
+        <button id="closeHabitsModalBtn" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-400 mt-2">
+        Tailor the rules to your personal needs (e.g. adjust reading length, custom nutrition goals, or specialized workouts).
+      </p>
+
+      <!-- Habit creator input -->
+      <div class="mt-4 flex gap-2">
+        <input type="text" id="newHabitInput" placeholder="e.g. 15 min Cold Shower / Meditation" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none">
+        <button id="addNewHabitBtn" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 font-semibold text-xs text-slate-950 rounded-xl transition flex items-center gap-1.5 shrink-0">
+          <i data-lucide="plus" class="w-4 h-4"></i> Add
+        </button>
+      </div>
+
+      <!-- Existing habits list in modal -->
+      <div id="modalHabitsList" class="flex-1 overflow-y-auto space-y-2 mt-4 pr-1">
+        <!-- Rendered list of habits to edit/delete -->
+      </div>
+
+      <div class="pt-4 border-t border-slate-800 flex justify-between items-center text-xs text-slate-400 mt-4">
+        <button id="resetDefaultHabitsBtn" class="hover:text-amber-400 transition underline underline-offset-4">
+          Reset to Classic 75 Rules
+        </button>
+        <button id="doneHabitsModalBtn" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-semibold">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS & DATA MODAL -->
+  <div id="settingsModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-[#121826] border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="settings" class="w-4 h-4 text-emerald-400"></i>
+          Settings & Challenge Data
+        </h3>
+        <button id="closeSettingsModalBtn" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Backup / Restore -->
+      <div class="space-y-2">
+        <h4 class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Backup & Transfer</h4>
+        <p class="text-xs text-slate-400">Your challenge state is preserved locally in your browser. Export it anytime to backup or switch devices.</p>
+        <div class="flex gap-2 pt-1">
+          <button id="exportDataBtn" class="flex-1 py-2 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-semibold text-slate-200 flex items-center justify-center gap-2 transition">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i> Export Backup (JSON)
+          </button>
+          <button id="importDataBtn" class="flex-1 py-2 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-semibold text-slate-200 flex items-center justify-center gap-2 transition">
+            <i data-lucide="upload" class="w-3.5 h-3.5"></i> Import JSON
+          </button>
+          <input type="file" id="importFileInput" accept=".json" class="hidden">
+        </div>
+      </div>
+
+      <!-- Rules Guide Summary -->
+      <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 text-xs space-y-1.5 text-slate-300">
+        <span class="font-bold text-emerald-400 flex items-center gap-1.5">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Standard 75 Principle
+        </span>
+        <p class="text-[11px] text-slate-400">If you miss a single daily requirement, you must return to Day 1 to uphold mental toughness and absolute discipline.</p>
+      </div>
+
+      <!-- Danger Zone: Reset -->
+      <div class="pt-3 border-t border-slate-800 space-y-2">
+        <h4 class="text-xs font-semibold text-rose-400 uppercase tracking-wider">Danger Zone</h4>
+        <button id="resetChallengeBtn" class="w-full py-2.5 px-3 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded-xl text-xs font-semibold text-rose-300 transition flex items-center justify-center gap-2">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset All Progress Back to Day 1
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTIFICATION TOAST -->
+  <div id="toastMessage" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 border border-slate-700 text-slate-100 text-xs font-medium px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5">
+    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+    <span id="toastText">Action completed successfully</span>
+  </div>
+
+  <!-- LOGIC SCRIPT -->
+  <script>
+    /**
+     * 75-Day Challenge Tracker Core State & Engine
+     */
+    const STORAGE_KEY = '75_challenge_tracker_data_v2';
+
+    // Default habit checklist items
+    const DEFAULT_HABITS = [
+      { id: 'h1', text: '45-Min Workout 1 (Outdoor)', icon: 'sun' },
+      { id: 'h2', text: '45-Min Workout 2 (Strength / Cardio)', icon: 'dumbbell' },
+      { id: 'h3', text: 'Clean Diet (No Cheat Meals & Zero Alcohol)', icon: 'apple' },
+      { id: 'h4', text: 'Drink 4 Liters (1 Gallon) of Water', icon: 'droplet' },
+      { id: 'h5', text: 'Read 10 Pages of Non-Fiction Book', icon: 'book-open' },
+      { id: 'h6', text: 'Take Daily Progress Photo', icon: 'camera' },
+      { id: 'h7', text: '7+ Hours Sleep / Recovery', icon: 'moon' }
+    ];
+
+    // Main App Data Model
+    let challengeData = {
+      startDate: new Date().toISOString().split('T')[0],
+      currentSelectedDay: 1,
+      habits: [...DEFAULT_HABITS],
+      // Map dayNumber (1-75) => { completedHabits: [], waterCups: 0, weight: '', notes: '', statusOverride: 'auto' }
+      days: {}
+    };
+
+    // Load initial storage
+    function loadFromStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          challengeData = { ...challengeData, ...parsed };
+        }
+      } catch (e) {
+        console.error('Could not load storage data', e);
+      }
+      
+      // Ensure day 1 to 75 are initialized
+      for (let i = 1; i <= 75; i++) {
+        if (!challengeData.days[i]) {
+          challengeData.days[i] = {
+            completedHabits: [],
+            waterCups: 0,
+            weight: '',
+            notes: '',
+            statusOverride: 'auto'
+          };
+        }
+      }
+    }
+
+    // Persist to storage
+    function saveToStorage() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(challengeData));
+      showSaveIndicator();
+    }
+
+    function showSaveIndicator() {
+      const el = document.getElementById('saveIndicator');
+      if (el) {
+        el.textContent = 'Saved';
+        el.classList.add('text-emerald-400');
+        setTimeout(() => {
+          el.textContent = 'Auto-saved';
+          el.classList.remove('text-emerald-400');
+        }, 1200);
+      }
+    }
+
+    // Toast notification
+    function showToast(msg, isSuccess = true) {
+      const toast = document.getElementById('toastMessage');
+      const text = document.getElementById('toastText');
+      text.textContent = msg;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 2500);
+    }
+
+    // Compute status of a specific day ('completed', 'failed', 'in_progress', 'locked')
+    function getDayStatus(dayNum) {
+      const day = challengeData.days[dayNum];
+      if (!day) return 'locked';
+
+      if (day.statusOverride && day.statusOverride !== 'auto') {
+        return day.statusOverride;
+      }
+
+      const activeHabitIds = challengeData.habits.map(h => h.id);
+      const completedCount = day.completedHabits.filter(id => activeHabitIds.includes(id)).length;
+      const totalHabits = activeHabitIds.length;
+
+      // Has user finished all requirements?
+      if (totalHabits > 0 && completedCount === totalHabits && day.waterCups >= 8) {
+        return 'completed';
+      }
+
+      // Check current calendar day offset relative to start date
+      const start = new Date(challengeData.startDate);
+      const today = new Date();
+      start.setHours(0, 0, 0, 0);
+      today.setHours(0, 0, 0, 0);
+      const diffTime = today.getTime() - start.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // 1-indexed
+
+      if (dayNum < diffDays) {
+        // Past day that wasn't completed
+        return completedCount > 0 ? 'failed' : 'failed';
+      } else if (dayNum === diffDays) {
+        return 'in_progress';
+      } else {
+        return 'locked';
+      }
+    }
+
+    // Calculate overall statistics
+    function calculateStats() {
+      let completedDays = 0;
+      let currentStreak = 0;
+      let bestStreak = 0;
+      let tempStreak = 0;
+
+      for (let i = 1; i <= 75; i++) {
+        const st = getDayStatus(i);
+        if (st === 'completed') {
+          completedDays++;
+          tempStreak++;
+          if (tempStreak > bestStreak) bestStreak = tempStreak;
+        } else {
+          tempStreak = 0;
+        }
+      }
+
+      // Calculate active current streak from Day 1 moving forward or up to today
+      let activeStreak = 0;
+      for (let i = 1; i <= 75; i++) {
+        const st = getDayStatus(i);
+        if (st === 'completed') {
+          activeStreak++;
+        } else if (st === 'in_progress') {
+          // Keep current count
+          break;
+        } else {
+          activeStreak = 0;
+        }
+      }
+
+      const pct = Math.round((completedDays / 75) * 100);
+      return {
+        completedDays,
+        percent: pct,
+        remainingDays: 75 - completedDays,
+        currentStreak: activeStreak,
+        bestStreak: Math.max(bestStreak, activeStreak)
+      };
+    }
+
+    // Render Stats
+    function renderStats() {
+      const stats = calculateStats();
+      document.getElementById('statPercent').textContent = `${stats.percent}%`;
+      document.getElementById('statDaysCompleted').textContent = `${stats.completedDays} / 75`;
+      document.getElementById('statRemaining').textContent = `${stats.remainingDays} days remaining`;
+      document.getElementById('statStreak').textContent = stats.currentStreak;
+      document.getElementById('statBestStreak').textContent = stats.bestStreak;
+
+      // Update circular bar
+      const circle = document.getElementById('progressCircle');
+      if (circle) {
+        const offset = 100 - stats.percent;
+        circle.style.strokeDashoffset = offset;
+      }
+
+      // Selected Day Stats Card
+      const selDay = challengeData.currentSelectedDay;
+      document.getElementById('statSelectedDay').textContent = `Day ${selDay}`;
+
+      // Calculate actual calendar date of selected day
+      const base = new Date(challengeData.startDate);
+      base.setDate(base.getDate() + (selDay - 1));
+      const dateStr = base.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      document.getElementById('statSelectedDate').textContent = `(${dateStr})`;
+
+      const dayStatus = getDayStatus(selDay);
+      const pill = document.getElementById('statDayStatusPill');
+      if (dayStatus === 'completed') {
+        pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Complete`;
+        pill.className = 'text-[11px] font-semibold text-emerald-400 mt-1 flex items-center gap-1';
+      } else if (dayStatus === 'failed') {
+        pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Incomplete / Failed`;
+        pill.className = 'text-[11px] font-semibold text-rose-400 mt-1 flex items-center gap-1';
+      } else if (dayStatus === 'in_progress') {
+        pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Active Today`;
+        pill.className = 'text-[11px] font-semibold text-amber-400 mt-1 flex items-center gap-1';
+      } else {
+        pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span> Upcoming`;
+        pill.className = 'text-[11px] font-semibold text-slate-400 mt-1 flex items-center gap-1';
+      }
+    }
+
+    // Render 75 Grid
+    function renderGrid() {
+      const container = document.getElementById('gridContainer');
+      container.innerHTML = '';
+
+      for (let i = 1; i <= 75; i++) {
+        const status = getDayStatus(i);
+        const isSelected = challengeData.currentSelectedDay === i;
+        const btn = document.createElement('button');
+        btn.dataset.day = i;
+
+        // Base styles
+        let baseClass = 'grid-cell h-10 sm:h-11 rounded-xl flex flex-col items-center justify-center font-mono text-xs font-semibold relative transition border ';
+
+        if (isSelected) {
+          baseClass += 'ring-2 ring-emerald-400 ring-offset-2 ring-offset-[#0b0f19] z-10 scale-105 ';
+        }
+
+        if (status === 'completed') {
+          baseClass += 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30';
+        } else if (status === 'failed') {
+          baseClass += 'bg-rose-500/15 text-rose-300 border-rose-500/30 hover:bg-rose-500/25';
+        } else if (status === 'in_progress') {
+          baseClass += 'bg-amber-500/20 text-amber-300 border-amber-500/50 hover:bg-amber-500/30 shadow-md shadow-amber-500/10';
+        } else {
+          // Locked / future
+          baseClass += 'bg-slate-900/60 text-slate-500 border-slate-800/80 hover:bg-slate-800/80 hover:text-slate-300';
+        }
+
+        btn.className = baseClass;
+        
+        let statusDot = '';
+        if (status === 'completed') {
+          statusDot = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>';
+        } else if (status === 'failed') {
+          statusDot = '<span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>';
+        } else if (status === 'in_progress') {
+          statusDot = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>';
+        }
+
+        btn.innerHTML = `
+          <span>${i}</span>
+          ${statusDot ? `<div class="mt-0.5">${statusDot}</div>` : ''}
+        `;
+
+        btn.addEventListener('click', () => {
+          challengeData.currentSelectedDay = i;
+          saveToStorage();
+          renderAll();
+        });
+
+        container.appendChild(btn);
+      }
+    }
+
+    // Render Habits for Selected Day
+    function renderDayHabits() {
+      const selDay = challengeData.currentSelectedDay;
+      const dayData = challengeData.days[selDay] || { completedHabits: [], waterCups: 0, weight: '', notes: '', statusOverride: 'auto' };
+      
+      document.getElementById('activeDayBadge').textContent = `Day ${selDay}`;
+
+      const listContainer = document.getElementById('habitsListContainer');
+      listContainer.innerHTML = '';
+
+      const habits = challengeData.habits;
+      let checkedCount = 0;
+
+      habits.forEach((habit) => {
+        const isChecked = dayData.completedHabits.includes(habit.id);
+        if (isChecked) checkedCount++;
+
+        const item = document.createElement('div');
+        item.className = `p-3 rounded-2xl border transition-all flex items-center justify-between cursor-pointer select-none ${
+          isChecked 
+            ? 'bg-emerald-950/20 border-emerald-500/40 text-emerald-100' 
+            : 'bg-slate-900/70 border-slate-800/80 hover:border-slate-700 text-slate-300'
+        }`;
+
+        item.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-6 h-6 rounded-lg flex items-center justify-center border transition ${
+              isChecked ? 'bg-emerald-500 border-emerald-400 text-slate-950' : 'border-slate-700 bg-slate-800/50 text-transparent'
+            }">
+              <i data-lucide="check" class="w-4 h-4 stroke-[3]"></i>
+            </div>
+            <span class="text-xs sm:text-sm font-medium ${isChecked ? 'line-through text-slate-400' : ''}">${habit.text}</span>
+          </div>
+          <div class="text-slate-500">
+            <i data-lucide="${habit.icon || 'circle'}" class="w-4 h-4"></i>
+          </div>
+        `;
+
+        item.addEventListener('click', () => {
+          toggleHabitCheck(habit.id);
+        });
+
+        listContainer.appendChild(item);
+      });
+
+      // Update completion score badge & bar
+      const total = habits.length;
+      document.getElementById('dayScoreBadge').textContent = `${checkedCount}/${total}`;
+      const pct = total > 0 ? (checkedCount / total) * 100 : 0;
+      document.getElementById('dayScoreBar').style.width = `${pct}%`;
+
+      // Trigger Confetti if today hit 100% and water is complete!
+      if (total > 0 && checkedCount === total && dayData.waterCups >= 8) {
+        triggerSuccessCelebration();
+      }
+    }
+
+    // Toggle Habit
+    function toggleHabitCheck(habitId) {
+      const selDay = challengeData.currentSelectedDay;
+      const day = challengeData.days[selDay];
+      const idx = day.completedHabits.indexOf(habitId);
+      if (idx > -1) {
+        day.completedHabits.splice(idx, 1);
+      } else {
+        day.completedHabits.push(habitId);
+      }
+      saveToStorage();
+      renderAll();
+    }
+
+    // Render Water Glasses
+    function renderWaterTracker() {
+      const selDay = challengeData.currentSelectedDay;
+      const day = challengeData.days[selDay];
+      const glassesContainer = document.getElementById('waterGlassesContainer');
+      glassesContainer.innerHTML = '';
+
+      const currentCups = day.waterCups || 0;
+      const liters = (currentCups * 0.5).toFixed(1);
+      document.getElementById('waterTotalLabel').textContent = `${liters} / 4.0 L`;
+
+      for (let i = 1; i <= 8; i++) {
+        const isFilled = i <= currentCups;
+        const glass = document.createElement('button');
+        glass.type = 'button';
+        glass.className = `h-10 rounded-xl flex flex-col items-center justify-center transition border ${
+          isFilled 
+            ? 'bg-cyan-500/25 border-cyan-400 text-cyan-300 shadow-sm shadow-cyan-500/20' 
+            : 'bg-slate-900 border-slate-800 text-slate-600 hover:border-slate-700'
+        }`;
+        glass.innerHTML = `
+          <i data-lucide="droplet" class="w-4 h-4 ${isFilled ? 'fill-cyan-400 text-cyan-400' : ''}"></i>
+          <span class="text-[9px] font-mono mt-0.5">500ml</span>
+        `;
+        glass.title = `Glass ${i} (0.5 L)`;
+        glass.addEventListener('click', () => {
+          if (day.waterCups === i) {
+            // Toggle down
+            day.waterCups = i - 1;
+          } else {
+            day.waterCups = i;
+          }
+          saveToStorage();
+          renderWaterTracker();
+          renderStats();
+          renderGrid();
+          lucide.createIcons();
+        });
+        glassesContainer.appendChild(glass);
+      }
+    }
+
+    // Render Day Input Form (Weight, Override, Notes)
+    function renderDayInputs() {
+      const selDay = challengeData.currentSelectedDay;
+      const day = challengeData.days[selDay];
+
+      const weightInput = document.getElementById('dayWeightInput');
+      const statusSelect = document.getElementById('dayStatusOverrideSelect');
+      const notesInput = document.getElementById('dayNotesInput');
+
+      weightInput.value = day.weight || '';
+      statusSelect.value = day.statusOverride || 'auto';
+      notesInput.value = day.notes || '';
+    }
+
+    // Modal Habits Manager
+    function renderModalHabitsList() {
+      const container = document.getElementById('modalHabitsList');
+      container.innerHTML = '';
+
+      challengeData.habits.forEach((habit, idx) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between p-3 bg-slate-900 border border-slate-800 rounded-xl';
+        row.innerHTML = `
+          <span class="text-xs font-medium text-slate-200">${idx + 1}. ${habit.text}</span>
+          <button class="delete-habit-btn p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition" data-id="${habit.id}">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        `;
+        container.appendChild(row);
+      });
+
+      // Bind delete events
+      container.querySelectorAll('.delete-habit-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = e.currentTarget.dataset.id;
+          challengeData.habits = challengeData.habits.filter(h => h.id !== id);
+          saveToStorage();
+          renderModalHabitsList();
+          renderDayHabits();
+          renderGrid();
+          renderStats();
+          lucide.createIcons();
+        });
+      });
+      lucide.createIcons();
+    }
+
+    // Confetti celebration
+    let lastCelebrationDay = null;
+    function triggerSuccessCelebration() {
+      const cur = challengeData.currentSelectedDay;
+      if (lastCelebrationDay === cur) return; // avoid repeating during same session click
+      lastCelebrationDay = cur;
+
+      if (window.confetti) {
+        confetti({
+          particleCount: 65,
+          spread: 70,
+          origin: { y: 0.7 },
+          colors: ['#10b981', '#06b6d4', '#f59e0b']
+        });
+      }
+    }
+
+    // Refresh entire UI
+    function renderAll() {
+      document.getElementById('challengeStartDateInput').value = challengeData.startDate;
+      renderStats();
+      renderGrid();
+      renderDayHabits();
+      renderWaterTracker();
+      renderDayInputs();
+      lucide.createIcons();
+    }
+
+    // Wire up event listeners
+    function setupEventListeners() {
+      // Start date change
+      document.getElementById('challengeStartDateInput').addEventListener('change', (e) => {
+        challengeData.startDate = e.target.value;
+        saveToStorage();
+        renderAll();
+        showToast('Challenge start date updated');
+      });
+
+      // Today shortcut button
+      document.getElementById('todayJumpBtn').addEventListener('click', () => {
+        const start = new Date(challengeData.startDate);
+        const today = new Date();
+        start.setHours(0,0,0,0);
+        today.setHours(0,0,0,0);
+        const diff = Math.floor((today - start) / (1000 * 60 * 60 * 24)) + 1;
+        challengeData.currentSelectedDay = Math.min(Math.max(diff, 1), 75);
+        saveToStorage();
+        renderAll();
+        showToast(`Jumped to Day ${challengeData.currentSelectedDay}`);
+      });
+
+      // Quick Mark Day complete button
+      document.getElementById('markDayCompleteQuickBtn').addEventListener('click', () => {
+        const selDay = challengeData.currentSelectedDay;
+        const day = challengeData.days[selDay];
+        day.completedHabits = challengeData.habits.map(h => h.id);
+        day.waterCups = 8;
+        day.statusOverride = 'completed';
+        saveToStorage();
+        renderAll();
+        triggerSuccessCelebration();
+        showToast(`Day ${selDay} marked 100% complete!`);
+      });
+
+      // Daily inputs listeners
+      document.getElementById('dayWeightInput').addEventListener('input', (e) => {
+        const selDay = challengeData.currentSelectedDay;
+        challengeData.days[selDay].weight = e.target.value;
+        saveToStorage();
+      });
+
+      document.getElementById('dayStatusOverrideSelect').addEventListener('change', (e) => {
+        const selDay = challengeData.currentSelectedDay;
+        challengeData.days[selDay].statusOverride = e.target.value;
+        saveToStorage();
+        renderAll();
+      });
+
+      document.getElementById('dayNotesInput').addEventListener('input', (e) => {
+        const selDay = challengeData.currentSelectedDay;
+        challengeData.days[selDay].notes = e.target.value;
+        saveToStorage();
+      });
+
+      // Modals toggles
+      const habitsModal = document.getElementById('habitsModal');
+      const openHabitsModal = () => {
+        renderModalHabitsList();
+        habitsModal.classList.remove('hidden');
+        habitsModal.classList.add('flex');
+        lucide.createIcons();
+      };
+      const closeHabitsModal = () => {
+        habitsModal.classList.add('hidden');
+        habitsModal.classList.remove('flex');
+        renderAll();
+      };
+
+      document.getElementById('openHabitsModalBtn').addEventListener('click', openHabitsModal);
+      document.getElementById('addHabitTriggerBtn').addEventListener('click', openHabitsModal);
+      document.getElementById('closeHabitsModalBtn').addEventListener('click', closeHabitsModal);
+      document.getElementById('doneHabitsModalBtn').addEventListener('click', closeHabitsModal);
+
+      // Add New Habit
+      document.getElementById('addNewHabitBtn').addEventListener('click', () => {
+        const input = document.getElementById('newHabitInput');
+        const text = input.value.trim();
+        if (text) {
+          challengeData.habits.push({
+            id: 'custom_' + Date.now(),
+            text: text,
+            icon: 'check-square'
+          });
+          input.value = '';
+          saveToStorage();
+          renderModalHabitsList();
+          renderDayHabits();
+          showToast('New habit added to daily checklist');
+        }
+      });
+
+      // Reset habits to default
+      document.getElementById('resetDefaultHabitsBtn').addEventListener('click', () => {
+        challengeData.habits = JSON.parse(JSON.stringify(DEFAULT_HABITS));
+        saveToStorage();
+        renderModalHabitsList();
+        renderDayHabits();
+        showToast('Habits reset to 75 standards');
+      });
+
+      // Settings Modal
+      const settingsModal = document.getElementById('settingsModal');
+      document.getElementById('openSettingsModalBtn').addEventListener('click', () => {
+        settingsModal.classList.remove('hidden');
+        settingsModal.classList.add('flex');
+      });
+      document.getElementById('closeSettingsModalBtn').addEventListener('click', () => {
+        settingsModal.classList.add('hidden');
+        settingsModal.classList.remove('flex');
+      });
+
+      // Export JSON
+      document.getElementById('exportDataBtn').addEventListener('click', () => {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(challengeData, null, 2));
+        const dlAnchor = document.createElement('a');
+        dlAnchor.setAttribute("href", dataStr);
+        dlAnchor.setAttribute("download", `75_challenge_backup_${new Date().toISOString().split('T')[0]}.json`);
+        document.body.appendChild(dlAnchor);
+        dlAnchor.click();
+        dlAnchor.remove();
+        showToast('Backup downloaded');
+      });
+
+      // Import JSON
+      document.getElementById('importDataBtn').addEventListener('click', () => {
+        document.getElementById('importFileInput').click();
+      });
+
+      document.getElementById('importFileInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const imported = JSON.parse(event.target.result);
+            if (imported.days && imported.habits) {
+              challengeData = imported;
+              saveToStorage();
+              renderAll();
+              settingsModal.classList.add('hidden');
+              settingsModal.classList.remove('flex');
+              showToast('Challenge data successfully imported!');
+            } else {
+              showToast('Invalid backup file format', false);
+            }
+          } catch (err) {
+            showToast('Failed to parse JSON file', false);
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      // Reset Entire Challenge
+      document.getElementById('resetChallengeBtn').addEventListener('click', () => {
+        challengeData.currentSelectedDay = 1;
+        challengeData.startDate = new Date().toISOString().split('T')[0];
+        challengeData.days = {};
+        for (let i = 1; i <= 75; i++) {
+          challengeData.days[i] = {
+            completedHabits: [],
+            waterCups: 0,
+            weight: '',
+            notes: '',
+            statusOverride: 'auto'
+          };
+        }
+        saveToStorage();
+        renderAll();
+        settingsModal.classList.add('hidden');
+        settingsModal.classList.remove('flex');
+        showToast('Challenge completely reset to Day 1');
+      });
+    }
+
+    // App Initialization
+    window.addEventListener('DOMContentLoaded', () => {
+      loadFromStorage();
+      setupEventListeners();
+      renderAll();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
